@@ -8,10 +8,10 @@ import { isIOS } from './lib/client';
 const STEPS = {
   android: [
     { screen: 'kakao', cap: '카카오톡으로 받은 링크를 눌렀다면, 아래 「크롬으로 열기」를 눌러요' },
-    { screen: 'browser', cap: '크롬에서 오른쪽 위 ⋮ (점 세 개)를 눌러요' },
-    { screen: 'menu', cap: '메뉴를 손가락으로 위로 쓸어 올려 아래쪽을 봐요' },
-    { screen: 'menu2', cap: '「설치 및 바로가기 만들기」를 눌러요 (휴대폰에 따라 「홈 화면에 추가」·「앱 설치」)' },
-    { screen: 'dialog', cap: '「설치」를 눌러요 (바로가기 말고 「설치」!)' },
+    { screen: 'abar', cap: '크롬 맨 위 오른쪽 끝 ⋮ (점 세 개)를 눌러요' },
+    { screen: 'amenu', cap: '메뉴가 열리면 손가락으로 위로 쓸어 올려 아래쪽까지 내려요' },
+    { screen: 'amenu2', cap: '「읽기 모드 표시」 아래 「설치 및 바로가기 만들기」를 눌러요' },
+    { screen: 'asheet', cap: '위쪽 「설치」를 눌러요 (아래 「바로가기 만들기」 말고!)' },
     { screen: 'home', cap: '홈 화면에 생긴 「인스타챌린지」 아이콘을 눌러 들어와요' },
     { screen: 'notify', cap: '「🔔 알림 켜기」 → 「허용」을 누르면 끝! 숙제 알림이 와요' },
   ],
@@ -70,6 +70,24 @@ export default function InstallGuide({ videoUrl, onClose }) {
   );
 }
 
+// 갤럭시 크롬 메뉴 순서 (원장님 휴대폰 화면 그대로)
+const GX_MENU = [
+  ['⊕', '새 탭'], ['🕶', '새 시크릿 탭'], ['▦', '새 그룹에 탭 추가'], '-',
+  ['🕘', '방문 기록'], ['🗑', '인터넷 사용 기록 삭제'], ['⚙', '사이트 제어'], '-',
+  ['✓', '다운로드'], ['★', '북마크'], ['▭', '최근 탭'], '-',
+  ['⤴', '공유…'], ['✦', 'Gemini에게 물어보기'], ['🔍', '페이지에서 찾기'], ['文', '번역…'], ['▤', '읽기 모드 표시'],
+  ['⤓', '설치 및 바로가기 만들기'], ['🖥', '데스크톱 사이트'], '-', ['⚙', '설정'], ['?', '고객센터'],
+];
+
+function AndroidTop() {
+  return (
+    <div className="gx-top">
+      <div className="gx-status"><span>SKT 11:56</span><span>📶 100</span></div>
+      <div className="gx-bar"><span>⌂</span><span className="gx-url">challenge.vercel.app</span><span>✦</span><span className="gx-tabs">5</span><span className="gx-dots">⋮</span></div>
+    </div>
+  );
+}
+
 function Finger({ x, y }) {
   return <span className="finger" style={{ left: x, top: y }}><i className="ripple" />👆</span>;
 }
@@ -81,6 +99,41 @@ function Phone({ os, screen }) {
     <div className="phone">
       <div className="phone-notch" />
       <div className="phone-screen">
+        {/* ── 안드로이드: 원장님 휴대폰(갤럭시 크롬) 화면을 그대로 따라 그림 ── */}
+        {(screen === 'abar' || screen === 'amenu' || screen === 'amenu2' || screen === 'asheet') && <AndroidTop />}
+        {screen === 'abar' && (
+          <>
+            <div className="ph-page"><div className="ph-mini-hero">인스타그램 챌린지</div><div className="ph-lines" /></div>
+            <Finger x="88%" y="5%" />
+          </>
+        )}
+        {(screen === 'amenu' || screen === 'amenu2') && (
+          <>
+            <div className="ph-page dim"><div className="ph-mini-hero">인스타그램 챌린지</div><div className="ph-lines" /></div>
+            <div className="gx-menu">
+              <div className={'gx-list ' + (screen === 'amenu' ? 'scrolling' : 'scrolled')}>
+                <div className="gx-icons"><span>←</span><span>→</span><span>☆</span><span>⤓</span><span>⟳</span></div>
+                {GX_MENU.map((t, i) => (t === '-'
+                  ? <hr key={i} />
+                  : <div key={i} className={'gx-item' + (screen === 'amenu2' && t[1] === '설치 및 바로가기 만들기' ? ' hl' : '')}><i>{t[0]}</i>{t[1]}</div>))}
+              </div>
+            </div>
+            {screen === 'amenu' ? <span className="swipe">👆</span> : <Finger x="58%" y="74%" />}
+          </>
+        )}
+        {screen === 'asheet' && (
+          <>
+            <div className="ph-page dim"><div className="ph-mini-hero">인스타그램 챌린지</div><div className="ph-lines" /></div>
+            <div className="gx-sheet">
+              <div className="gx-sheet-t">설치 및 바로가기 만들기</div>
+              <div className="gx-rows">
+                <div className="gx-row hl"><img src="/icon-192.png" alt="" /><b>설치</b><span>›</span></div>
+                <div className="gx-row"><img src="/icon-192.png" alt="" /><div><b>바로가기 만들기</b><small>Chrome에서 바로가기 열기</small></div><span>›</span></div>
+              </div>
+            </div>
+            <Finger x="45%" y="74%" />
+          </>
+        )}
         {screen === 'kakao' && (
           <>
             <div className="ph-bar kakao">카카오톡 <span>⋯</span></div>

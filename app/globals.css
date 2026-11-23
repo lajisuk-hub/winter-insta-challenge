@@ -234,6 +234,35 @@ label small { font-weight: 400; color: var(--muted); }
 .ph-menu { position: absolute; top: 34px; right: 6px; width: 120px; background: #fff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.25); padding: 4px 0; animation: pop .3s ease; }
 .ph-menu.sheet { top: auto; bottom: 0; left: 0; right: 0; width: auto; border-radius: 14px 14px 0 0; padding: 8px 0 14px; }
 .ph-menu div { padding: 7px 10px; }
+/* 갤럭시 크롬 화면 따라 그리기 */
+.gx-top { background: #e1306c; color: #fff; }
+.gx-status { display: flex; justify-content: space-between; padding: 14px 12px 2px; font-size: 8px; font-weight: 700; }
+.gx-bar { display: flex; align-items: center; gap: 5px; padding: 4px 6px 7px; font-size: 11px; }
+.gx-url { flex: 1; background: rgba(255,255,255,.25); border-radius: 99px; padding: 3px 7px; font-size: 8.5px; white-space: nowrap; overflow: hidden; }
+.gx-tabs { border: 1.5px solid #fff; border-radius: 3px; font-size: 7px; padding: 0 3px; }
+.gx-dots { font-size: 14px; font-weight: 900; }
+.gx-menu { position: absolute; top: 40px; right: 4px; width: 128px; height: 282px; background: #f8f8fb; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.28); overflow: hidden; animation: pop .3s ease; }
+.gx-list { transition: transform .4s; }
+.gx-list.scrolling { animation: gxscroll 3.4s ease-in-out infinite; }
+.gx-list.scrolled { transform: translateY(-190px); }
+@keyframes gxscroll { 0%, 15% { transform: translateY(0); } 65%, 100% { transform: translateY(-190px); } }
+.gx-icons { display: flex; justify-content: space-between; padding: 7px 6px; }
+.gx-icons span { width: 19px; height: 19px; border-radius: 50%; background: #e9e9ee; display: grid; place-items: center; font-size: 9px; }
+.gx-item { display: flex; align-items: center; gap: 6px; padding: 4.5px 8px; font-size: 9px; color: #222; }
+.gx-item i { font-style: normal; width: 12px; text-align: center; font-size: 9px; color: #444; }
+.gx-item.hl { background: #fff3cc; font-weight: 900; color: #8a5d00; outline: 2px solid #f6b81c; outline-offset: -2px; border-radius: 6px; }
+.gx-list hr { border: 0; border-top: 1px solid #e3e3e8; margin: 3px 8px; }
+.gx-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #f6f6f9; border-radius: 16px 16px 0 0; padding: 12px 8px 18px; animation: up .3s ease; }
+.gx-sheet-t { text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+.gx-rows { background: #ececf1; border-radius: 12px; overflow: hidden; }
+.gx-row { display: flex; align-items: center; gap: 8px; padding: 9px 8px; font-size: 10.5px; border-bottom: 1px solid #f6f6f9; }
+.gx-row img { width: 26px; height: 26px; border-radius: 7px; }
+.gx-row > div { flex: 1; display: flex; flex-direction: column; }
+.gx-row b { flex: 1; font-weight: 600; }
+.gx-row small { font-size: 8px; color: #666; }
+.gx-row span { color: #666; font-size: 14px; }
+.gx-row.hl { background: #fff3cc; outline: 2px solid #f6b81c; outline-offset: -2px; border-radius: 12px; }
+.phone { height: 380px; }
 .ph-menu.tall { height: 255px; overflow: hidden; width: 140px; }
 .ph-menu-list { transition: transform .4s; }
 .ph-menu-list div { padding: 6px 10px; }
