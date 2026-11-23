@@ -437,7 +437,7 @@ function PushTab({ pw }) {
   return (
     <section className="card editor">
       <h3>🔔 지금 바로 알림 보내기</h3>
-      <p className="hint">자동 알림: 매일 <b>아침 8시</b>에 그날 일정·숙제, <b>저녁 8시</b>에 오늘 숙제를 아직 안 한 분께 알림이 가요(12/1~1/31). 따로 보낼 말이 있을 때만 여기서 보내세요.</p>
+      <p className="hint">자동 알림: 매일 <b>아침 9시 반</b>에 그날 일정·숙제, <b>저녁 8시</b>에 오늘 숙제를 아직 안 한 분께 알림이 가요(12/1~1/31). 따로 보낼 말이 있을 때만 여기서 보내세요.</p>
       <label>제목 <small>(비우면 챌린지 이름)</small><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예) 오늘 밤 9시 줌 강의!" /></label>
       <label>내용<textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="예) 링크는 앱에서 확인해 주세요." /></label>
       <div className="row">

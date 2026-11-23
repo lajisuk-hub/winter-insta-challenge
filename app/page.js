@@ -433,7 +433,7 @@ function AlarmCard({ me, onGuide }) {
     return (
       <section className="card alarm on">
         <div className="alarm-t">🔔 알림 켜짐</div>
-        <p className="muted small">매일 아침 8시 오늘의 숙제, 저녁 8시 아직 안 한 숙제를 알려 드려요.</p>
+        <p className="muted small">매일 아침 9시 반 오늘의 숙제, 저녁 8시 아직 안 한 숙제를 알려 드려요.</p>
         {!env.standalone && (installEvt
           ? <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>
           : <button className="guide-link inline" onClick={onGuide}>📲 앱으로 설치하는 법 보기</button>)}
@@ -445,7 +445,7 @@ function AlarmCard({ me, onGuide }) {
   return (
     <section className="card alarm">
       <div className="alarm-t">🔔 숙제 알림 받기</div>
-      <p className="small">아침 8시엔 오늘의 숙제를, 저녁 8시엔 아직 안 한 숙제를 휴대폰으로 알려 드려요.</p>
+      <p className="small">아침 9시 반엔 오늘의 숙제를, 저녁 8시엔 아직 안 한 숙제를 휴대폰으로 알려 드려요.</p>
       {env.ios && !env.standalone ? (
         <div className="ios-guide">
           <b>아이폰은 먼저 앱으로 설치해 주세요</b>

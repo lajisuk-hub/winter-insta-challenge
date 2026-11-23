@@ -1,5 +1,5 @@
 // 자동 알림 (Vercel이 매일 두 번 부른다)
-// 아침 8시: 오늘 일정·숙제 안내 / 저녁 8시: 오늘 숙제를 아직 안 한 분께만 다시 알림
+// 아침 9시 반(vercel.json 30 0 * * * = 한국 9:30): 오늘 일정·숙제 안내 / 저녁 8시: 오늘 숙제를 아직 안 한 분께만 다시 알림
 import { readAllParticipants, writeJson, pPath, readSchedule } from '../../lib/store';
 import { pushToPeople } from '../../lib/push';
 import { kstToday, inRange, hasHomework, missedDays } from '../../lib/dates';
