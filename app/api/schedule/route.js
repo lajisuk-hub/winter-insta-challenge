@@ -25,10 +25,16 @@ function clean(s) {
     };
     if (day.event || day.homework || day.notice || day.videos.length) days[d] = day;
   }
+  // 날짜와 상관없는 참고 영상 강의
+  const refs = (Array.isArray(s?.refs) ? s.refs : [])
+    .map((x) => ({ title: String(x?.title || '').slice(0, 100), url: String(x?.url || '').trim().slice(0, 1000), memo: String(x?.memo || '').slice(0, 500) }))
+    .filter((x) => x.url)
+    .slice(0, 100);
   return {
     title: String(s?.title || '인스타그램 챌린지').slice(0, 60),
     intro: String(s?.intro || '').slice(0, 1000),
     days,
+    refs,
     savedAt: new Date().toISOString(),
   };
 }

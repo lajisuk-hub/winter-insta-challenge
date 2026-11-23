@@ -96,6 +96,7 @@ export async function readSchedule() {
     title: '인스타그램 챌린지',
     intro: '12월 1일부터 1월 31일까지, 매일 조금씩 함께해요!',
     days: {},
+    refs: [],
     ...(s || {}),
   };
 }

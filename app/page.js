@@ -76,6 +76,8 @@ export default function Home() {
   const hwSoFar = homeworkDaysUntil(schedule, today);
   const doneCount = hwSoFar.filter((d) => done[d]).length;
   const videos = allDays().flatMap((d) => (days[d]?.videos || []).map((v) => ({ ...v, date: d })));
+  const lectureDays = allDays().filter((d) => days[d]?.event || (days[d]?.videos || []).length);
+  const refs = schedule?.refs || [];
 
   const saveDone = useCallback(async (date, isDone, link) => {
     const j = await api('/api/done', { name: me.name, phone: me.phone, date, done: isDone, link, known: me.done });
@@ -143,7 +145,7 @@ export default function Home() {
 
       <nav className="tabs">
         <button className={tab === 'cal' ? 'on' : ''} onClick={() => setTab('cal')}>📅 달력</button>
-        <button className={tab === 'video' ? 'on' : ''} onClick={() => setTab('video')}>🎬 녹화본 {videos.length ? `(${videos.length})` : ''}</button>
+        <button className={tab === 'video' ? 'on' : ''} onClick={() => setTab('video')}>🎬 강의·녹화본 {videos.length + refs.length ? `(${videos.length + refs.length})` : ''}</button>
       </nav>
 
       {tab === 'cal' && (
@@ -161,23 +163,46 @@ export default function Home() {
               else if (hw && d < today) { cls += ' miss'; mark = '❗'; }
               else if (hw) mark = '✏️';
               if ((day.videos || []).length) mark += '🎬';
-              return { cls, mark, label: day.event ? day.event.slice(0, 8) : hw ? '숙제' : '' };
+              let label = hw ? '숙제' : '';
+              if (day.event) {
+                const times = day.event.match(/\d{1,2}시/g);
+                const isLecture = /강의/.test(day.event);
+                if (isLecture) mark = '🎓' + mark;
+                label = times ? times.map((t) => t.replace('시', '')).join('·') + '시' : isLecture ? '강의' : day.event.slice(0, 6);
+              }
+              return { cls, mark, label };
             }}
           />
-          <div className="legend"><span>✅ 완료</span><span>❗ 안 함</span><span>✏️ 숙제</span><span>🎬 녹화본</span></div>
+          <div className="legend"><span>✅ 완료</span><span>❗ 안 함</span><span>✏️ 숙제</span><span>🎓 강의</span><span>🎬 녹화본</span></div>
         </section>
       )}
 
       {tab === 'video' && (
-        <section className="card">
-          {videos.length === 0 && <p className="muted">아직 올라온 녹화본이 없어요.</p>}
-          {videos.slice().reverse().map((v, i) => (
-            <div key={i} className="video-item">
-              <div className="video-date">{prettyDate(v.date)}{days[v.date]?.event ? ` · ${days[v.date].event}` : ''}</div>
-              <VideoView v={v} />
-            </div>
-          ))}
-        </section>
+        <>
+          <section className="card">
+            <h3 className="sec-h">📅 강의 일정과 녹화본</h3>
+            {lectureDays.length === 0 && <p className="muted">아직 등록된 강의가 없어요.</p>}
+            {lectureDays.map((d) => (
+              <div key={d} className={'video-item' + (d === today ? ' is-today' : '')}>
+                <div className="video-date">{prettyDate(d)}{d === today ? ' · 오늘' : ''}</div>
+                {days[d].event && <div className="lec-title">{days[d].event}</div>}
+                {(days[d].videos || []).length
+                  ? days[d].videos.map((v, i) => <VideoView key={i} v={v} />)
+                  : <p className="muted small">{d < today ? '녹화본을 준비하고 있어요.' : '강의가 끝나면 이곳에 녹화본이 올라와요.'}</p>}
+              </div>
+            ))}
+          </section>
+          <section className="card">
+            <h3 className="sec-h">📚 참고 영상 강의</h3>
+            {refs.length === 0 && <p className="muted">아직 올라온 참고 영상이 없어요.</p>}
+            {refs.map((v, i) => (
+              <div key={i} className="video-item">
+                <VideoView v={v} />
+                {v.memo && <RichText text={v.memo} />}
+              </div>
+            ))}
+          </section>
+        </>
       )}
 
       {openDay && (
@@ -299,6 +324,27 @@ function DayModal({ date, day, doneInfo, isFuture, onClose, onSave }) {
   );
 }
 
+// 설치 단추가 안 뜰 때 보여 주는 설치 방법(눌러서 펼치기)
+function InstallGuide({ ios }) {
+  return (
+    <details className="install-guide">
+      <summary>📲 휴대폰 홈 화면에 앱으로 설치하는 법</summary>
+      {ios ? (
+        <ol>
+          <li>사파리 아래쪽 가운데 <b>공유 단추(□↑)</b></li>
+          <li><b>「홈 화면에 추가」</b> → 오른쪽 위 <b>「추가」</b></li>
+        </ol>
+      ) : (
+        <ol>
+          <li>크롬 오른쪽 위 <b>⋮ (점 세 개)</b>를 눌러요</li>
+          <li><b>「홈 화면에 추가」</b> 또는 <b>「앱 설치」</b>를 눌러요</li>
+          <li><b>「설치」</b>(또는 「추가」)를 누르면 홈 화면에 <b>인스타챌린지</b> 아이콘이 생겨요</li>
+        </ol>
+      )}
+    </details>
+  );
+}
+
 // 휴대폰 알림 켜기 + 앱 설치 안내
 function AlarmCard({ me }) {
   const [state, setState] = useState('checking'); // checking | on | off
@@ -356,7 +402,9 @@ function AlarmCard({ me }) {
       <section className="card alarm on">
         <div className="alarm-t">🔔 알림 켜짐</div>
         <p className="muted small">매일 아침 8시 오늘의 숙제, 저녁 8시 아직 안 한 숙제를 알려 드려요.</p>
-        {installEvt && !env.standalone && <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>}
+        {!env.standalone && (installEvt
+          ? <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>
+          : <InstallGuide ios={env.ios} />)}
         {msg && <p className="hint">{msg}</p>}
       </section>
     );
@@ -378,7 +426,9 @@ function AlarmCard({ me }) {
       ) : (
         <>
           <button className="btn primary" disabled={busy} onClick={turnOn}>{busy ? '켜는 중…' : '🔔 알림 켜기'}</button>
-          {installEvt && <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>}
+          {!env.standalone && (installEvt
+            ? <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>
+            : <InstallGuide ios={false} />)}
         </>
       )}
       {msg && <p className="hint">{msg}</p>}

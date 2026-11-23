@@ -60,11 +60,13 @@ export default function Admin() {
       </header>
       <nav className="tabs">
         <button className={tab === 'plan' ? 'on' : ''} onClick={() => setTab('plan')}>📅 일정·숙제</button>
+        <button className={tab === 'refs' ? 'on' : ''} onClick={() => setTab('refs')}>📚 참고영상</button>
         <button className={tab === 'people' ? 'on' : ''} onClick={() => setTab('people')}>👥 참여자</button>
         <button className={tab === 'push' ? 'on' : ''} onClick={() => setTab('push')}>🔔 알림</button>
         <button className={tab === 'set' ? 'on' : ''} onClick={() => setTab('set')}>⚙️ 기본</button>
       </nav>
       {tab === 'plan' && <PlanTab pw={pw} schedule={schedule} setSchedule={setSchedule} />}
+      {tab === 'refs' && <RefsTab pw={pw} schedule={schedule} setSchedule={setSchedule} />}
       {tab === 'people' && <PeopleTab pw={pw} schedule={schedule} />}
       {tab === 'push' && <PushTab pw={pw} />}
       {tab === 'set' && <SettingsTab pw={pw} schedule={schedule} setSchedule={setSchedule} />}
@@ -191,6 +193,98 @@ function PlanTab({ pw, schedule, setSchedule }) {
         </div>
       </section>
     </div>
+  );
+}
+
+// 날짜와 상관없이 언제든 보는 참고 영상 강의
+function RefsTab({ pw, schedule, setSchedule }) {
+  const [refs, setRefs] = useState(() => (schedule.refs || []).map((r) => ({ memo: '', ...r })));
+  const [dirty, setDirty] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [upPct, setUpPct] = useState(null);
+
+  const edit = (i, k, v) => { setRefs((p) => p.map((x, j) => (j === i ? { ...x, [k]: v } : x))); setDirty(true); };
+  const move = (i, dir) => {
+    setRefs((p) => {
+      const n = [...p];
+      const j = i + dir;
+      if (j < 0 || j >= n.length) return p;
+      [n[i], n[j]] = [n[j], n[i]];
+      return n;
+    });
+    setDirty(true);
+  };
+
+  async function save() {
+    setBusy(true);
+    setMsg('');
+    try {
+      const s = await saveSchedule(pw, { ...schedule, refs });
+      setSchedule(s);
+      setRefs((s.refs || []).map((r) => ({ memo: '', ...r })));
+      setDirty(false);
+      setMsg('✅ 저장했어요. 참여자 화면 「강의·녹화본」 아래쪽에 보여요.');
+    } catch (e) {
+      setMsg('❌ ' + e.message);
+    }
+    setBusy(false);
+  }
+
+  async function onFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUpPct(0);
+    setMsg('');
+    try {
+      const safe = file.name.replace(/[^\w.\-가-힣]/g, '_');
+      const blob = await upload(`videos/refs/${safe}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        clientPayload: pw,
+        multipart: file.size > 50 * 1024 * 1024,
+        onUploadProgress: (p) => setUpPct(Math.round(p.percentage)),
+      });
+      setRefs((p) => [...p, { title: file.name.replace(/\.[^.]+$/, ''), url: blob.url, memo: '' }]);
+      setDirty(true);
+      setMsg('영상이 올라갔어요. 아래 「저장하기」를 꼭 눌러 주세요.');
+    } catch (err) {
+      setMsg('❌ 영상 올리기 실패: ' + err.message);
+    }
+    setUpPct(null);
+  }
+
+  return (
+    <section className="card editor">
+      <h3>📚 참고 영상 강의 {dirty && <small className="pink">· 저장 안 됨</small>}</h3>
+      <p className="hint">날짜와 상관없이 참여자가 언제든 볼 수 있는 영상이에요. 유튜브 주소를 붙여 넣거나 영상 파일을 올리세요. 위에 있는 것이 먼저 보여요.</p>
+      {refs.map((v, i) => (
+        <div key={i} className="ref-edit">
+          <input value={v.title} onChange={(e) => edit(i, 'title', e.target.value)} placeholder="영상 제목 (예: 릴스 잘 찍는 법)" />
+          <input value={v.url} onChange={(e) => edit(i, 'url', e.target.value)} placeholder="https://youtu.be/…" />
+          <span className="row" style={{ marginTop: 0 }}>
+            <button className="link-btn" onClick={() => move(i, -1)} title="위로">▲</button>
+            <button className="link-btn" onClick={() => move(i, 1)} title="아래로">▼</button>
+            <button className="link-btn danger" onClick={() => { setRefs((p) => p.filter((_, j) => j !== i)); setDirty(true); }}>삭제</button>
+          </span>
+          <textarea rows={2} value={v.memo} onChange={(e) => edit(i, 'memo', e.target.value)} placeholder="설명 (선택)" />
+          {v.url && <VideoView v={v} />}
+        </div>
+      ))}
+      {!refs.length && <p className="muted">아직 참고 영상이 없어요.</p>}
+      <div className="row">
+        <button className="btn ghost" onClick={() => { setRefs((p) => [...p, { title: '', url: '', memo: '' }]); setDirty(true); }}>＋ 영상 주소 넣기</button>
+        <label className="btn ghost file-btn">
+          {upPct === null ? '⬆ 영상 파일 올리기' : `올리는 중 ${upPct}%`}
+          <input type="file" accept="video/*" onChange={onFile} disabled={upPct !== null} hidden />
+        </label>
+      </div>
+      {msg && <p className={msg.startsWith('❌') ? 'err' : 'okmsg'}>{msg}</p>}
+      <div className="row end">
+        <button className="btn primary" disabled={busy || upPct !== null} onClick={save}>{busy ? '저장 중…' : '💾 저장하기'}</button>
+      </div>
+    </section>
   );
 }
 
