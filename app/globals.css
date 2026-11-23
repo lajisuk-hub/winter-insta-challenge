@@ -234,6 +234,14 @@ label small { font-weight: 400; color: var(--muted); }
 .ph-menu { position: absolute; top: 34px; right: 6px; width: 120px; background: #fff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.25); padding: 4px 0; animation: pop .3s ease; }
 .ph-menu.sheet { top: auto; bottom: 0; left: 0; right: 0; width: auto; border-radius: 14px 14px 0 0; padding: 8px 0 14px; }
 .ph-menu div { padding: 7px 10px; }
+.ph-menu.tall { height: 255px; overflow: hidden; width: 140px; }
+.ph-menu-list { transition: transform .4s; }
+.ph-menu-list div { padding: 6px 10px; }
+.ph-menu-list.scrolling { animation: menuscroll 3.2s ease-in-out infinite; }
+.ph-menu-list.scrolled { transform: translateY(-112px); }
+@keyframes menuscroll { 0%, 15% { transform: translateY(0); } 60%, 100% { transform: translateY(-112px); } }
+.swipe { position: absolute; left: 58%; font-size: 26px; z-index: 5; animation: swipe 3.2s ease-in-out infinite; pointer-events: none; }
+@keyframes swipe { 0%, 15% { top: 70%; opacity: 1; } 60% { top: 30%; opacity: 1; } 75%, 100% { top: 30%; opacity: 0; } }
 .ph-menu .hl, .ph-dialog .hl { background: #fff3cc; font-weight: 900; color: #b07b00; }
 @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
 .ph-dialog { position: absolute; left: 12px; right: 12px; top: 36%; background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.3); padding: 12px; text-align: center; animation: pop .3s ease; }

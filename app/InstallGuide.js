@@ -9,8 +9,9 @@ const STEPS = {
   android: [
     { screen: 'kakao', cap: '카카오톡으로 받은 링크를 눌렀다면, 아래 「크롬으로 열기」를 눌러요' },
     { screen: 'browser', cap: '크롬에서 오른쪽 위 ⋮ (점 세 개)를 눌러요' },
-    { screen: 'menu', cap: '「홈 화면에 추가」(또는 「앱 설치」)를 눌러요' },
-    { screen: 'dialog', cap: '「설치」를 눌러요' },
+    { screen: 'menu', cap: '메뉴를 손가락으로 위로 쓸어 올려 아래쪽을 봐요' },
+    { screen: 'menu2', cap: '「설치 및 바로가기 만들기」를 눌러요 (휴대폰에 따라 「홈 화면에 추가」·「앱 설치」)' },
+    { screen: 'dialog', cap: '「설치」를 눌러요 (바로가기 말고 「설치」!)' },
     { screen: 'home', cap: '홈 화면에 생긴 「인스타챌린지」 아이콘을 눌러 들어와요' },
     { screen: 'notify', cap: '「🔔 알림 켜기」 → 「허용」을 누르면 끝! 숙제 알림이 와요' },
   ],
@@ -96,19 +97,31 @@ function Phone({ os, screen }) {
             <Finger x={ios ? '46%' : '84%'} y={ios ? '88%' : '6%'} />
           </>
         )}
-        {screen === 'menu' && (
+        {ios && screen === 'menu' && (
           <>
-            {!ios && <div className="ph-bar">🔒 winter-insta…<span className="ph-dots">⋮</span></div>}
             <div className="ph-page dim"><div className="ph-mini-hero">인스타그램 챌린지</div></div>
-            <div className={'ph-menu ' + (ios ? 'sheet' : '')}>
-              {(ios ? ['복사', '읽기 목록에 추가', '책갈피 추가', '홈 화면에 추가 ⊞', '페이지에서 찾기'] : ['새 탭', '방문 기록', '다운로드', '홈 화면에 추가', '데스크톱 사이트']).map((t) => (
+            <div className="ph-menu sheet">
+              {['복사', '읽기 목록에 추가', '책갈피 추가', '홈 화면에 추가 ⊞', '페이지에서 찾기'].map((t) => (
                 <div key={t} className={t.startsWith('홈 화면에 추가') ? 'hl' : ''}>{t}</div>
               ))}
             </div>
-            <Finger x={ios ? '40%' : '62%'} y={ios ? '74%' : '43%'} />
+            <Finger x="40%" y="74%" />
           </>
         )}
-        {screen === 'dialog' && (
+        {!ios && (screen === 'menu' || screen === 'menu2') && (
+          <>
+            <div className="ph-bar">🔒 winter-insta…<span className="ph-dots">⋮</span></div>
+            <div className="ph-page dim"><div className="ph-mini-hero">인스타그램 챌린지</div></div>
+            <div className="ph-menu tall">
+              <div className={'ph-menu-list ' + (screen === 'menu' ? 'scrolling' : 'scrolled')}>
+                {['새 탭', '새 시크릿 탭', '방문 기록', '다운로드', '북마크', '최근 탭', '공유…', '페이지에서 찾기', '번역…', '읽기 모드 표시', '설치 및 바로가기 만들기', '데스크톱 사이트', '설정'].map((t) => (
+                  <div key={t} className={screen === 'menu2' && t === '설치 및 바로가기 만들기' ? 'hl' : ''}>{t}</div>
+                ))}
+              </div>
+            </div>
+            {screen === 'menu' ? <span className="swipe">👆</span> : <Finger x="70%" y="80%" />}
+          </>
+        )}        {screen === 'dialog' && (
           <>
             <div className="ph-page dim"><div className="ph-mini-hero">인스타그램 챌린지</div></div>
             <div className="ph-dialog">
