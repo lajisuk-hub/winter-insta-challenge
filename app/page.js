@@ -11,6 +11,24 @@ import {
 const ORG = '영유아교육디자인연구소';
 const GUIDE_KEY = 'winter-challenge.guide.seen.v1';
 
+const KAKAO_URL = 'https://open.kakao.com/o/shPvD6Xi';
+const DOCS_URL = 'https://wmentor-receipt.vercel.app/?c=usj9zx';
+
+function QuickLinks({ docs = true }) {
+  return (
+    <section className="card quick-links">
+      <a className="ql kakao" href={KAKAO_URL} target="_blank" rel="noopener noreferrer">
+        <span className="ql-ico">💬</span><span><b>카톡 상담하기</b><small>궁금한 점을 카카오톡 오픈채팅으로 물어보세요</small></span><span className="ql-go">›</span>
+      </a>
+      {docs && (
+        <a className="ql docs" href={DOCS_URL} target="_blank" rel="noopener noreferrer">
+          <span className="ql-ico">🧾</span><span><b>거래명세서 · 수료증 받기</b><small>필요한 서류를 바로 받을 수 있어요</small></span><span className="ql-go">›</span>
+        </a>
+      )}
+    </section>
+  );
+}
+
 export default function Home() {
   const [showGuide, setShowGuide] = useState(false);
   const [schedule, setSchedule] = useState(null);
@@ -116,6 +134,7 @@ export default function Home() {
           <p className="hint">처음이면 자동으로 등록돼요. 다음부터는 같은 이름·전화번호로 들어오시면 기록이 이어져요.</p>
         </form>
         <button className="guide-link" onClick={() => setShowGuide(true)}>📲 휴대폰에 앱으로 설치하는 법 보기</button>
+        <QuickLinks docs={false} />
         <footer className="foot">{ORG}에서 진행하는 인스타그램 챌린지</footer>
         {showGuide && <InstallGuide videoUrl={schedule.installVideo} onClose={closeGuide} />}
       </main>
@@ -162,6 +181,8 @@ export default function Home() {
       ) : (
         <section className="card today-card"><div className="today-head">🏁 챌린지가 끝났어요. 함께해 주셔서 고마워요!</div></section>
       )}
+
+      <QuickLinks />
 
       <nav className="tabs">
         <button className={tab === 'cal' ? 'on' : ''} onClick={() => setTab('cal')}>📅 달력</button>

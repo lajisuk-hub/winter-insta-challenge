@@ -299,3 +299,15 @@ label small { font-weight: 400; color: var(--muted); }
 .filter-row button.on { background: var(--yellow); border-color: var(--yellow); color: #3a2a00; }
 .btn.danger { background: #fff; color: var(--warn); border: 1.5px solid #f3b8b2; }
 .small-time { font-size: 12.5px; color: var(--muted); }
+
+/* 카톡 상담 · 거래명세서/수료증 단추 */
+.quick-links { display: grid; gap: 10px; padding: 12px; }
+.ql { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); border-radius: 14px; padding: 12px 14px; border: 1.5px solid var(--line); background: #fff; }
+.ql b { display: block; font-size: 16px; }
+.ql small { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+.ql > span:nth-child(2) { flex: 1; min-width: 0; }
+.ql-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 21px; flex: none; }
+.ql.kakao .ql-ico { background: #fee500; }
+.ql.docs .ql-ico { background: var(--yellow-soft); }
+.ql-go { font-size: 22px; color: var(--muted); font-weight: 800; }
+.ql:active { transform: translateY(1px); }
