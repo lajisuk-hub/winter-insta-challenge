@@ -1,5 +1,5 @@
 // 참여자 입장: 이름+전화번호로 들어오면 기록을 만들거나 불러온다.
-import { readJson, writeJson, pPath, phoneDigits, publicRec, sameName } from '../../lib/store';
+import { readJson, writeJson, pPath, phoneDigits, publicRec, sameName, BLOCKED_MSG } from '../../lib/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,9 +30,16 @@ export async function POST(req) {
       if (!sameName(rec.name, name)) {
         return Response.json({ error: `이 전화번호는 「${mask(rec.name)}」 님 이름으로 이미 등록되어 있어요. 처음 입장할 때 적은 이름 그대로 적어 주세요.` }, { status: 409 });
       }
+      if (rec.blocked) return Response.json({ error: BLOCKED_MSG, blocked: true }, { status: 403 });
+      // 최근 입장 시각(30분에 한 번만 기록)
+      if (!rec.lastSeen || Date.now() - Date.parse(rec.lastSeen) > 30 * 60 * 1000) {
+        rec = { ...rec, lastSeen: new Date().toISOString() };
+        try { await writeJson(pPath(digits), rec); } catch (e) { /* 기록 못 해도 입장은 됨 */ }
+      }
       return Response.json({ ok: true, me: publicRec(rec) });
     }
-    rec = { name, phone: digits, createdAt: new Date().toISOString(), done: {}, subs: [] };
+    const now = new Date().toISOString();
+    rec = { name, phone: digits, createdAt: now, lastSeen: now, done: {}, subs: [] };
     await writeJson(pPath(digits), rec);
     return Response.json({ ok: true, me: publicRec(rec), created: true });
   } catch (err) {

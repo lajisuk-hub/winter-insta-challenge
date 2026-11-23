@@ -1,5 +1,5 @@
 // 관리자: 참여자 목록 보기 / 참여자 삭제
-import { readAllParticipants, removeParticipant, checkAdmin, phoneDigits } from '../../lib/store';
+import { readAllParticipants, removeParticipant, checkAdmin, phoneDigits, readJson, writeJson, pPath } from '../../lib/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,12 +13,21 @@ export async function POST(req) {
       await removeParticipant(phoneDigits(b.del));
       return Response.json({ ok: true });
     }
+    if (b.block) {
+      const digits = phoneDigits(b.block);
+      const rec = await readJson(pPath(digits));
+      if (!rec) return Response.json({ error: '참여자를 찾지 못했어요.' }, { status: 404 });
+      const next = { ...rec, blocked: !!b.blocked, blockedAt: b.blocked ? new Date().toISOString() : null };
+      if (b.blocked) next.subs = []; // 차단하면 알림도 끊는다
+      await writeJson(pPath(digits), next);
+      return Response.json({ ok: true });
+    }
     if (b.checkOnly) return Response.json({ ok: true });
     const people = await readAllParticipants();
     return Response.json({
       ok: true,
       people: people
-        .map((p) => ({ name: p.name, phone: p.phone, createdAt: p.createdAt, done: p.done || {}, push: (p.subs || []).length }))
+        .map((p) => ({ name: p.name, phone: p.phone, createdAt: p.createdAt, lastSeen: p.lastSeen || p.createdAt, blocked: !!p.blocked, done: p.done || {}, push: (p.subs || []).length }))
         .sort((a, c) => String(a.createdAt).localeCompare(String(c.createdAt))),
     });
   } catch (err) {

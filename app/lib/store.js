@@ -101,6 +101,8 @@ export async function readSchedule() {
   };
 }
 
+export const BLOCKED_MSG = '참여가 제한된 번호예요. 영유아교육디자인연구소로 문의해 주세요.';
+
 // 화면에 보낼 참여자 정보(알림 주소는 빼고)
 export function publicRec(rec) {
   return { name: rec.name, phone: rec.phone, done: rec.done || {}, push: (rec.subs || []).length > 0 };

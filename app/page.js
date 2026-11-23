@@ -1,13 +1,18 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, VideoView, RichText } from './components';
+import InstallGuide from './InstallGuide';
 import { kstToday, prettyDate, hasHomework, missedDays, homeworkDaysUntil, inRange, START, allDays } from './lib/dates';
 import {
   api, LOGIN_KEY, registerSW, enablePush, currentSub, pushSupported,
   isIOS, isStandalone, inAppBrowser, openInExternalBrowser,
 } from './lib/client';
 
+const ORG = '영유아교육디자인연구소';
+const GUIDE_KEY = 'winter-challenge.guide.seen.v1';
+
 export default function Home() {
+  const [showGuide, setShowGuide] = useState(false);
   const [schedule, setSchedule] = useState(null);
   const [me, setMe] = useState(null);
   const [booting, setBooting] = useState(true);
@@ -22,6 +27,7 @@ export default function Home() {
   // 처음 열 때: 일정 불러오기 + 이 기기에서 입장한 적 있으면 바로 들어가기
   useEffect(() => {
     registerSW();
+    try { if (!isStandalone() && !localStorage.getItem(GUIDE_KEY)) setShowGuide(true); } catch (e) { /* 무시 */ }
     (async () => {
       try { setSchedule(await api('/api/schedule')); } catch (e) { setSchedule({ title: '인스타그램 챌린지', intro: '', days: {} }); }
       let saved = null;
@@ -32,7 +38,7 @@ export default function Home() {
           const j = await api('/api/join', saved);
           setMe(j.me);
           afterLogin();
-        } catch (e) { /* 입장 화면에서 다시 */ }
+        } catch (e) { setMsg(e.message); }
       }
       setBooting(false);
     })();
@@ -59,6 +65,11 @@ export default function Home() {
       setMsg(err.message);
     }
     setBusy(false);
+  }
+
+  function closeGuide() {
+    setShowGuide(false);
+    try { localStorage.setItem(GUIDE_KEY, '1'); } catch (e) { /* 무시 */ }
   }
 
   function logout() {
@@ -90,8 +101,10 @@ export default function Home() {
     return (
       <main className="wrap">
         <header className="hero">
-          <div className="hero-badge">📸 12.1 – 1.31</div>
-          <h1>{schedule.title}</h1>
+          <div className="org-badge">{ORG}</div>
+          <h1><span className="insta">{schedule.title}</span></h1>
+          <div className="hero-badge">📸 2026. 12. 1 – 2027. 1. 31</div>
+          <img className="hero-chars" src="/chars/all4.webp" alt="우리아이들 친구들" />
           {schedule.intro && <p className="hero-intro">{schedule.intro}</p>}
         </header>
         <form className="card login" onSubmit={join}>
@@ -102,6 +115,9 @@ export default function Home() {
           <button className="btn primary big" disabled={busy}>{busy ? '확인 중…' : '입장하기'}</button>
           <p className="hint">처음이면 자동으로 등록돼요. 다음부터는 같은 이름·전화번호로 들어오시면 기록이 이어져요.</p>
         </form>
+        <button className="guide-link" onClick={() => setShowGuide(true)}>📲 휴대폰에 앱으로 설치하는 법 보기</button>
+        <footer className="foot">{ORG}에서 진행하는 인스타그램 챌린지</footer>
+        {showGuide && <InstallGuide videoUrl={schedule.installVideo} onClose={closeGuide} />}
       </main>
     );
   }
@@ -109,7 +125,9 @@ export default function Home() {
   return (
     <main className="wrap">
       <header className="top">
-        <div>
+        <img className="top-char" src="/chars/boy.webp" alt="" />
+        <div className="top-text">
+          <div className="top-org">{ORG}</div>
           <div className="top-title">{schedule.title}</div>
           <div className="top-hello">{me.name} 님, 반가워요 👋</div>
         </div>
@@ -117,6 +135,8 @@ export default function Home() {
       </header>
 
       <section className="card progress">
+        <img className="prog-char" src="/chars/giroki.webp" alt="" />
+        <div className="prog-cheer">{cheer(hwSoFar.length, doneCount)}</div>
         <div className="prog-row">
           <span>지금까지 숙제 <b>{hwSoFar.length}</b>개 중 <b className="pink">{doneCount}</b>개 완료</span>
           {missed.length > 0 && <button className="chip warn" onClick={() => setShowMissed(true)}>안 한 숙제 {missed.length}</button>}
@@ -124,7 +144,7 @@ export default function Home() {
         <div className="bar"><i style={{ width: hwSoFar.length ? `${(doneCount / hwSoFar.length) * 100}%` : '0%' }} /></div>
       </section>
 
-      <AlarmCard me={me} />
+      <AlarmCard me={me} onGuide={() => setShowGuide(true)} />
 
       {inRange(today) ? (
         <section className="card today-card" onClick={() => setOpenDay(today)}>
@@ -133,7 +153,7 @@ export default function Home() {
           {todayHasHw ? (
             <div className="today-hw">
               <RichText text={days[today].homework} />
-              <div className={'today-state ' + (done[today] ? 'ok' : '')}>{done[today] ? '✅ 오늘 숙제 완료!' : '👉 눌러서 숙제하고 완료 표시하기'}</div>
+              <div className={'today-state ' + (done[today] ? 'ok' : '')}>{done[today] ? <><img className="mini-char" src="/chars/baby.webp" alt="" />✅ 오늘 숙제 완료! 최고예요</> : '👉 눌러서 숙제하고 완료 표시하기'}</div>
             </div>
           ) : <div className="muted">오늘은 숙제가 없어요.</div>}
         </section>
@@ -216,7 +236,11 @@ export default function Home() {
         />
       )}
 
-      {showMissed && !openDay && (
+      {showGuide && <InstallGuide videoUrl={schedule.installVideo} onClose={closeGuide} />}
+
+      <footer className="foot">{ORG}에서 진행하는 인스타그램 챌린지</footer>
+
+      {showMissed && !openDay && !showGuide && (
         <MissedPopup
           missed={pastMissed}
           todayPending={todayHasHw && !done[today]}
@@ -235,7 +259,7 @@ function MissedPopup({ missed, todayPending, today, days, onPick, onClose }) {
     return (
       <div className="modal-bg" onClick={onClose}>
         <div className="modal small" onClick={(e) => e.stopPropagation()}>
-          <div className="big-emoji">🎉</div>
+          <img className="pop-char" src="/chars/baby.webp" alt="" />
           <h3>밀린 숙제가 하나도 없어요!</h3>
           <p className="muted">정말 잘하고 계세요.</p>
           <button className="btn primary" onClick={onClose}>좋아요</button>
@@ -246,7 +270,7 @@ function MissedPopup({ missed, todayPending, today, days, onPick, onClose }) {
   return (
     <div className="modal-bg" onClick={onClose}>
       <div className="modal small" onClick={(e) => e.stopPropagation()}>
-        <div className="big-emoji">📝</div>
+        <img className="pop-char" src="/chars/girl.webp" alt="" />
         <h3>아직 안 한 숙제가 있어요</h3>
         <ul className="miss-list">
           {todayPending && (
@@ -261,6 +285,14 @@ function MissedPopup({ missed, todayPending, today, days, onPick, onClose }) {
       </div>
     </div>
   );
+}
+
+function cheer(total, done) {
+  if (!total) return '곧 첫 숙제가 열려요. 함께 시작해요!';
+  if (done === total) return '숙제를 모두 해냈어요! 정말 멋져요 🎉';
+  if (done / total >= 0.7) return '거의 다 왔어요! 조금만 더 힘내요 💪';
+  if (done === 0) return '오늘 첫 숙제부터 시작해 볼까요?';
+  return '차근차근 잘하고 있어요 😊';
 }
 
 const oneLine = (t) => {
@@ -324,29 +356,8 @@ function DayModal({ date, day, doneInfo, isFuture, onClose, onSave }) {
   );
 }
 
-// 설치 단추가 안 뜰 때 보여 주는 설치 방법(눌러서 펼치기)
-function InstallGuide({ ios }) {
-  return (
-    <details className="install-guide">
-      <summary>📲 휴대폰 홈 화면에 앱으로 설치하는 법</summary>
-      {ios ? (
-        <ol>
-          <li>사파리 아래쪽 가운데 <b>공유 단추(□↑)</b></li>
-          <li><b>「홈 화면에 추가」</b> → 오른쪽 위 <b>「추가」</b></li>
-        </ol>
-      ) : (
-        <ol>
-          <li>크롬 오른쪽 위 <b>⋮ (점 세 개)</b>를 눌러요</li>
-          <li><b>「홈 화면에 추가」</b> 또는 <b>「앱 설치」</b>를 눌러요</li>
-          <li><b>「설치」</b>(또는 「추가」)를 누르면 홈 화면에 <b>인스타챌린지</b> 아이콘이 생겨요</li>
-        </ol>
-      )}
-    </details>
-  );
-}
-
 // 휴대폰 알림 켜기 + 앱 설치 안내
-function AlarmCard({ me }) {
+function AlarmCard({ me, onGuide }) {
   const [state, setState] = useState('checking'); // checking | on | off
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
@@ -404,7 +415,7 @@ function AlarmCard({ me }) {
         <p className="muted small">매일 아침 8시 오늘의 숙제, 저녁 8시 아직 안 한 숙제를 알려 드려요.</p>
         {!env.standalone && (installEvt
           ? <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>
-          : <InstallGuide ios={env.ios} />)}
+          : <button className="guide-link inline" onClick={onGuide}>📲 앱으로 설치하는 법 보기</button>)}
         {msg && <p className="hint">{msg}</p>}
       </section>
     );
@@ -422,13 +433,14 @@ function AlarmCard({ me }) {
             <li><b>「홈 화면에 추가」</b>를 누르고 오른쪽 위 <b>「추가」</b></li>
             <li>홈 화면에 생긴 <b>인스타챌린지</b> 아이콘으로 들어와서 이 단추를 눌러요</li>
           </ol>
+          <button className="guide-link inline" onClick={onGuide}>▶ 그림으로 보기</button>
         </div>
       ) : (
         <>
           <button className="btn primary" disabled={busy} onClick={turnOn}>{busy ? '켜는 중…' : '🔔 알림 켜기'}</button>
           {!env.standalone && (installEvt
             ? <button className="btn ghost" onClick={install}>📲 휴대폰에 앱으로 설치하기</button>
-            : <InstallGuide ios={false} />)}
+            : <button className="guide-link inline" onClick={onGuide}>📲 앱으로 설치하는 법 보기</button>)}
         </>
       )}
       {msg && <p className="hint">{msg}</p>}

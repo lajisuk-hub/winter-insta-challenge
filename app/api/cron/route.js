@@ -24,7 +24,7 @@ export async function GET(req) {
 
   const s = await readSchedule();
   const day = s.days?.[today];
-  const people = await readAllParticipants();
+  const people = (await readAllParticipants()).filter((p) => !p.blocked);
   const writeBack = (rec) => writeJson(pPath(rec.phone), rec);
 
   let r;

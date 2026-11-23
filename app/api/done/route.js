@@ -1,5 +1,5 @@
 // 숙제 완료 표시(또는 취소) + 인스타 게시물 주소 저장
-import { readJson, writeJson, pPath, phoneDigits, publicRec, sameName } from '../../lib/store';
+import { BLOCKED_MSG, readJson, writeJson, pPath, phoneDigits, publicRec, sameName } from '../../lib/store';
 import { inRange } from '../../lib/dates';
 
 export const runtime = 'nodejs';
@@ -11,6 +11,7 @@ export async function POST(req) {
     const digits = phoneDigits(b.phone);
     const rec = await readJson(pPath(digits));
     if (!rec || !sameName(rec.name, b.name)) return Response.json({ error: '참여자 정보를 찾지 못했어요. 다시 입장해 주세요.' }, { status: 404 });
+    if (rec.blocked) return Response.json({ error: BLOCKED_MSG, blocked: true }, { status: 403 });
     if (!inRange(String(b.date || ''))) return Response.json({ error: '챌린지 기간이 아니에요.' }, { status: 400 });
 
     // 막 저장한 내용이 보관함에서 늦게 보일 수 있어, 화면이 알고 있는 완료 목록도 함께 합친다

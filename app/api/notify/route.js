@@ -16,7 +16,7 @@ export async function POST(req) {
     if (!title && !body) return Response.json({ error: '알림 내용을 적어 주세요.' }, { status: 400 });
     const s = await readSchedule();
     const today = kstToday();
-    let people = await readAllParticipants();
+    let people = (await readAllParticipants()).filter((p) => !p.blocked);
     if (b.target === 'notDoneToday') people = people.filter((p) => !(p.done || {})[today]);
     const r = await pushToPeople(
       people,

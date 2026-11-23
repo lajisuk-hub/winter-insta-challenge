@@ -33,6 +33,7 @@ function clean(s) {
   return {
     title: String(s?.title || '인스타그램 챌린지').slice(0, 60),
     intro: String(s?.intro || '').slice(0, 1000),
+    installVideo: String(s?.installVideo || '').trim().slice(0, 1000),
     days,
     refs,
     savedAt: new Date().toISOString(),

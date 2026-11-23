@@ -293,6 +293,8 @@ function PeopleTab({ pw, schedule }) {
   const [err, setErr] = useState('');
   const [open, setOpen] = useState('');
   const [q, setQ] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [sort, setSort] = useState('new');
   const today = kstToday();
   const hwDays = useMemo(() => homeworkDaysUntil(schedule, today), [schedule, today]);
 
@@ -301,6 +303,17 @@ function PeopleTab({ pw, schedule }) {
     try { setPeople((await api('/api/admin', { pw })).people); } catch (e) { setErr(e.message); }
   }
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
+  async function setBlock(p, blocked) {
+    const q = blocked
+      ? `${p.name}(${fmtPhone(p.phone)}) 님을 차단할까요?\n\n차단하면 이 번호로는 입장할 수 없고 알림도 가지 않아요. 기록은 남아 있어 나중에 「차단 풀기」로 되돌릴 수 있어요.`
+      : `${p.name} 님의 차단을 풀까요? 다시 입장할 수 있게 돼요.`;
+    if (!confirm(q)) return;
+    try {
+      await api('/api/admin', { pw, block: p.phone, blocked });
+      setPeople((list) => list.map((x) => (x.phone === p.phone ? { ...x, blocked, push: blocked ? 0 : x.push } : x)));
+    } catch (e) { alert(e.message); }
+  }
 
   async function remove(p) {
     if (!confirm(`${p.name}(${fmtPhone(p.phone)}) 님을 삭제할까요? 완료 기록도 함께 지워지고 되돌릴 수 없어요.`)) return;
@@ -321,15 +334,28 @@ function PeopleTab({ pw, schedule }) {
   if (err) return <section className="card"><p className="err">{err}</p><button className="btn ghost" onClick={load}>다시 불러오기</button></section>;
   if (!people) return <section className="card"><p className="muted">참여자를 불러오는 중…</p></section>;
 
-  const list = people.filter((p) => !q || p.name.includes(q) || p.phone.includes(q.replace(/\D/g, '') || '@@'));
-  const todayDone = hasHomework(schedule.days?.[today]) ? people.filter((p) => p.done[today]).length : null;
+  const active = people.filter((p) => !p.blocked);
+  const todayHw = hasHomework(schedule.days?.[today]);
+  const list = people
+    .filter((p) => !q || p.name.includes(q) || p.phone.includes(q.replace(/\D/g, '') || '@@'))
+    .filter((p) => {
+      if (filter === 'blocked') return p.blocked;
+      if (p.blocked) return filter === 'all';
+      if (filter === 'notToday') return todayHw && !p.done[today];
+      if (filter === 'missed') return hwDays.some((d) => !p.done[d]);
+      if (filter === 'new') return Date.now() - Date.parse(p.createdAt) < 24 * 3600 * 1000;
+      return true;
+    })
+    .sort((a, b) => (sort === 'recent' ? String(b.lastSeen).localeCompare(String(a.lastSeen)) : String(b.createdAt).localeCompare(String(a.createdAt))));
+  const todayDone = todayHw ? active.filter((p) => p.done[today]).length : null;
 
   return (
     <section className="card">
       <div className="row between">
         <div>
-          참여자 <b>{people.length}</b>명 · 알림 켠 분 <b>{people.filter((p) => p.push).length}</b>명
+          입장한 분 <b>{active.length}</b>명 · 알림 켠 분 <b>{active.filter((p) => p.push).length}</b>명
           {todayDone !== null && <> · 오늘 숙제 완료 <b className="pink">{todayDone}</b>명</>}
+          {people.length > active.length && <> · 차단 <b>{people.length - active.length}</b>명</>}
         </div>
         <div className="row">
           <button className="btn ghost" onClick={load}>🔄 새로고침</button>
@@ -337,14 +363,23 @@ function PeopleTab({ pw, schedule }) {
         </div>
       </div>
       <input className="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름이나 전화번호로 찾기" />
+      <div className="filter-row">
+        {[['all', '전체'], ['new', '오늘 새로 입장'], ['notToday', '오늘 숙제 안 한 분'], ['missed', '밀린 숙제 있는 분'], ['blocked', '차단한 분']].map(([k, t]) => (
+          <button key={k} className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{t}</button>
+        ))}
+        <span style={{ flex: 1 }} />
+        <button className={sort === 'new' ? 'on' : ''} onClick={() => setSort('new')}>최근 등록순</button>
+        <button className={sort === 'recent' ? 'on' : ''} onClick={() => setSort('recent')}>최근 입장순</button>
+      </div>
+      <p className="hint">이름을 누르면 첫 입장·최근 입장 시각, 숙제한 날, <b>차단</b> 단추가 나와요. 모르는 분이 들어왔으면 차단하세요.</p>
       <div className="table">
         <div className="tr th"><span>이름</span><span>전화번호</span><span>완료</span><span>안 한 숙제</span><span>알림</span></div>
         {list.map((p) => {
           const missed = hwDays.filter((d) => !p.done[d]);
           return (
             <div key={p.phone}>
-              <button className="tr" onClick={() => setOpen(open === p.phone ? '' : p.phone)}>
-                <span><b>{p.name}</b></span>
+              <button className={'tr' + (p.blocked ? ' is-blocked' : '')} onClick={() => setOpen(open === p.phone ? '' : p.phone)}>
+                <span><b>{p.name}</b>{p.blocked && <span className="badge blocked">차단</span>}<br /><span className="small-time">최근 {fmtTime(p.lastSeen)}</span></span>
                 <span>{fmtPhone(p.phone)}</span>
                 <span>{hwDays.length - missed.length}/{hwDays.length}</span>
                 <span className={missed.length ? 'pink' : ''}>{missed.length ? `${missed.length}개` : '없음'}</span>
@@ -352,6 +387,7 @@ function PeopleTab({ pw, schedule }) {
               </button>
               {open === p.phone && (
                 <div className="detail">
+                  <p><b>첫 입장:</b> {fmtTime(p.createdAt)} · <b>최근 입장:</b> {fmtTime(p.lastSeen)}</p>
                   {missed.length > 0 && <p><b>안 한 날:</b> {missed.map(prettyDate).join(', ')}</p>}
                   <p><b>완료한 날:</b></p>
                   <ul>
@@ -360,7 +396,12 @@ function PeopleTab({ pw, schedule }) {
                     ))}
                     {!Object.keys(p.done).length && <li className="muted">아직 없어요</li>}
                   </ul>
-                  <button className="link-btn danger" onClick={() => remove(p)}>이 참여자 삭제</button>
+                  <div className="row">
+                    {p.blocked
+                      ? <button className="btn ghost" onClick={() => setBlock(p, false)}>🔓 차단 풀기</button>
+                      : <button className="btn danger" onClick={() => setBlock(p, true)}>🚫 차단하기</button>}
+                    <button className="link-btn danger" onClick={() => remove(p)}>기록까지 완전히 삭제</button>
+                  </div>
                 </div>
               )}
             </div>
@@ -412,10 +453,11 @@ function PushTab({ pw }) {
 function SettingsTab({ pw, schedule, setSchedule }) {
   const [title, setTitle] = useState(schedule.title);
   const [intro, setIntro] = useState(schedule.intro);
+  const [installVideo, setInstallVideo] = useState(schedule.installVideo || '');
   const [msg, setMsg] = useState('');
   async function save() {
     try {
-      setSchedule(await saveSchedule(pw, { ...schedule, title, intro }));
+      setSchedule(await saveSchedule(pw, { ...schedule, title, intro, installVideo }));
       setMsg('✅ 저장했어요.');
     } catch (e) { setMsg('❌ ' + e.message); }
   }
@@ -424,10 +466,22 @@ function SettingsTab({ pw, schedule, setSchedule }) {
       <h3>⚙️ 기본 설정</h3>
       <label>챌린지 이름<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
       <label>첫 화면 안내글<textarea rows={4} value={intro} onChange={(e) => setIntro(e.target.value)} /></label>
+      <label>📲 설치 안내 영상 주소 <small>(선택: 직접 찍은 유튜브 영상이 있으면 넣어 주세요. 처음 들어올 때 뜨는 설치 안내 팝업 맨 위에 나와요. 비워 두면 그림 안내만 나와요)</small>
+        <input value={installVideo} onChange={(e) => setInstallVideo(e.target.value)} placeholder="https://youtu.be/…" />
+      </label>
+      {installVideo && <VideoView v={{ url: installVideo }} />}
       {msg && <p className={msg.startsWith('❌') ? 'err' : 'okmsg'}>{msg}</p>}
       <button className="btn primary" onClick={save}>💾 저장</button>
     </section>
   );
+}
+
+function fmtTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  const w = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+  return `${d.getMonth() + 1}/${d.getDate()}(${w}) ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 function fmtPhone(d) {
