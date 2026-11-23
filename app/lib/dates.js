@@ -11,6 +11,11 @@ export const ymd = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
 
 // 한국 시간으로 오늘 날짜
 export function kstToday() {
+  // 내 컴퓨터에서 시험할 때만: 날짜를 바꿔 볼 수 있게
+  if (typeof window !== 'undefined' && location.hostname === 'localhost') {
+    try { const t = localStorage.getItem('debug.today'); if (t) return t; } catch (e) { /* 무시 */ }
+  }
+  if (typeof window === 'undefined' && process.env.DEBUG_TODAY) return process.env.DEBUG_TODAY;
   return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 }
 

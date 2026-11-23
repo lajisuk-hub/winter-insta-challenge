@@ -139,7 +139,7 @@ label small { font-weight: 400; color: var(--muted); }
 .sect-t { font-weight: 800; margin-bottom: 6px; }
 .done-box { margin-top: 16px; padding-top: 6px; border-top: 1.5px dashed var(--line); }
 .done-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.done-ok { font-weight: 800; color: var(--ok); font-size: 18px; flex: 1; }
+.done-ok { font-weight: 800; color: var(--ok); font-size: 18px; flex-basis: 100%; }
 .miss-list { list-style: none; padding: 0; margin: 10px 0; text-align: left; max-height: 46vh; overflow-y: auto; }
 .miss-list li button { width: 100%; text-align: left; background: #fff6f5; border: 1.5px solid #f8d6d2; border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; display: flex; flex-direction: column; }
 .miss-list li button span { color: var(--muted); font-size: 14px; }
